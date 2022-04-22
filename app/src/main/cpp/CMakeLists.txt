@@ -7,14 +7,18 @@ add_library(
 
         SHARED
 
-        native-lib.cpp)
+        native-lib.cpp
+)
 
 target_compile_definitions(openglbenchmark PRIVATE BX_CONFIG_DEBUG=1)
+
+add_subdirectory(glad)
 
 find_library(
         log-lib
 
-        log)
+        log
+)
 
 target_link_libraries(
         openglbenchmark
@@ -22,4 +26,6 @@ target_link_libraries(
         android
         ${log-lib}
         GLESv3
-        EGL)
+        EGL
+        glad
+)

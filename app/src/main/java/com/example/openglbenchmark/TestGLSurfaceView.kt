@@ -10,7 +10,7 @@ class TestGLSurfaceView(context: Context) : GLSurfaceView(context) {
     init {
 
         // Create an OpenGL ES 3.0 context
-        setEGLContextClientVersion(2)
+        setEGLContextClientVersion(3)
 
         renderer = TestGLRenderer()
 
