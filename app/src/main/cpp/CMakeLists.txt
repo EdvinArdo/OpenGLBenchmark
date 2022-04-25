@@ -7,7 +7,7 @@ add_library(
 
         SHARED
 
-        native-lib.cpp
+        opengl-renderer.cpp
 )
 
 target_compile_definitions(openglbenchmark PRIVATE BX_CONFIG_DEBUG=1)
