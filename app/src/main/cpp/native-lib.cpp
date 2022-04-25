@@ -4,6 +4,7 @@
 #include <string>
 #include <EGL/egl.h>
 #include "glad/include/glad/glad.h"
+#include "shader.h"
 
 AAssetManager *mgr;
 
@@ -11,20 +12,8 @@ int width;
 int height;
 bool initialized = false;
 
-unsigned int shaderProgram;
+Shader shader;
 unsigned int VBO, VAO, EBO;
-
-const char *loadShader(const char *filename) {
-    AAsset *asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-    long fileSize = AAsset_getLength(asset);
-    char *buffer = new char[fileSize + 1]();
-    AAsset_read(asset, buffer, fileSize);
-    AAsset_close(asset);
-    buffer[fileSize] = '\0';
-    __android_log_print(ANDROID_LOG_DEBUG, "openglbenchmarktag",
-                        "%s", buffer);
-    return buffer;
-}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -38,51 +27,8 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
                                 "Failed to initialize GLAD");
         }
 
-        // build and compile our shader program
-        // ------------------------------------
-        // vertex shader
-        const char *vertexShaderSource = loadShader("shader.vert");
-        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        delete vertexShaderSource;
-        glCompileShader(vertexShader);
-        // check for shader compile errors
-        int success;
-        char infoLog[512];
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            __android_log_print(ANDROID_LOG_ERROR, "openglbenchmarktag",
-                                "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s", infoLog);
-        }
-        // fragment shader
-        const char *fragmentShaderSource = loadShader("shader.frag");
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        delete fragmentShaderSource;
-        glCompileShader(fragmentShader);
-        // check for shader compile errors
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            __android_log_print(ANDROID_LOG_ERROR, "openglbenchmarktag",
-                                "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n%s", infoLog);
-        }
-        // link shaders
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-        // check for linking errors
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-            __android_log_print(ANDROID_LOG_ERROR, "openglbenchmarktag",
-                                "ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s", infoLog);
-
-        }
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
+        // init shader
+        shader.init(mgr, "shader.vert", "shader.frag");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -132,7 +78,7 @@ Java_com_example_openglbenchmark_TestGLRenderer_drawFrame(JNIEnv *env, jobject t
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw
-    glUseProgram(shaderProgram);
+    shader.use();
     glBindVertexArray(VAO);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
