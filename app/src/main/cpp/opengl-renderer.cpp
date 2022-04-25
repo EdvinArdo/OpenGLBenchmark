@@ -5,6 +5,9 @@
 #include <EGL/egl.h>
 #include "glad/include/glad/glad.h"
 #include "shader.h"
+#include "camera.h"
+#include "model.h"
+#include "mesh.h"
 
 AAssetManager *mgr;
 
