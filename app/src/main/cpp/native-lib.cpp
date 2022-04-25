@@ -11,21 +11,20 @@ int width;
 int height;
 bool initialized = false;
 
-const char *vertexShaderSource =
-        "attribute vec3 aPos;     \n"
-        "void main()\n"
-        "{\n"
-        "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}";
-
-const char *fragmentShaderSource =
-        "void main()\n"
-        "{\n"
-        "   gl_FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}";
-
 unsigned int shaderProgram;
 unsigned int VBO, VAO, EBO;
+
+const char *loadShader(const char *filename) {
+    AAsset *asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+    long fileSize = AAsset_getLength(asset);
+    char *buffer = new char[fileSize + 1]();
+    AAsset_read(asset, buffer, fileSize);
+    AAsset_close(asset);
+    buffer[fileSize] = '\0';
+    __android_log_print(ANDROID_LOG_DEBUG, "openglbenchmarktag",
+                        "%s", buffer);
+    return buffer;
+}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -42,8 +41,10 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         // build and compile our shader program
         // ------------------------------------
         // vertex shader
+        const char *vertexShaderSource = loadShader("shader.vert");
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+        delete vertexShaderSource;
         glCompileShader(vertexShader);
         // check for shader compile errors
         int success;
@@ -55,8 +56,10 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
                                 "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n%s", infoLog);
         }
         // fragment shader
+        const char *fragmentShaderSource = loadShader("shader.frag");
         unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+        delete fragmentShaderSource;
         glCompileShader(fragmentShader);
         // check for shader compile errors
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
