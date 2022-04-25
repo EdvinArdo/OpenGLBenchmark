@@ -3,6 +3,7 @@
 #include <jni.h>
 #include <string>
 #include <EGL/egl.h>
+#include <unistd.h>
 #include "glad/include/glad/glad.h"
 #include "shader.h"
 #include "camera.h"
@@ -15,8 +16,9 @@ int width;
 int height;
 bool initialized = false;
 
-Shader shader;
 unsigned int VBO, VAO, EBO;
+
+Shader *shader;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -31,7 +33,7 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         }
 
         // init shader
-        shader.init(mgr, "shader.vert", "shader.frag");
+        shader = new Shader("shader.vert", "shader.frag");
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -81,7 +83,7 @@ Java_com_example_openglbenchmark_TestGLRenderer_drawFrame(JNIEnv *env, jobject t
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw
-    shader.use();
+    shader->use();
     glBindVertexArray(VAO);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -105,4 +107,33 @@ JNIEXPORT void JNICALL
 Java_com_example_openglbenchmark_MainActivity_passAssetManager(JNIEnv *env, jobject thiz,
                                                                jobject assetManager) {
     mgr = AAssetManager_fromJava(env, assetManager);
+
+    jclass activityClass = env->GetObjectClass(thiz);
+
+    // Get path to cache dir (/data/data/org.wikibooks.OpenGL/cache)
+    jmethodID getCacheDir = env->GetMethodID(activityClass, "getCacheDir", "()Ljava/io/File;");
+    jobject file = env->CallObjectMethod(thiz, getCacheDir);
+    jclass fileClass = env->FindClass("java/io/File");
+    jmethodID getAbsolutePath = env->GetMethodID(fileClass, "getAbsolutePath",
+                                                 "()Ljava/lang/String;");
+    jstring jpath = (jstring) env->CallObjectMethod(file, getAbsolutePath);
+    const char *app_dir = env->GetStringUTFChars(jpath, NULL);
+
+    // chdir in the application cache directory
+    chdir(app_dir);
+    env->ReleaseStringUTFChars(jpath, app_dir);
+
+    AAssetDir *assetDir = AAssetManager_openDir(mgr, "");
+    const char *filename = (const char *) NULL;
+    while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+        AAsset *asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+        char buf[BUFSIZ];
+        int nb_read = 0;
+        FILE *out = fopen(filename, "w");
+        while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
+            fwrite(buf, nb_read, 1, out);
+        fclose(out);
+        AAsset_close(asset);
+    }
+    AAssetDir_close(assetDir);
 }
