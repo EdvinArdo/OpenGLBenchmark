@@ -11,7 +11,6 @@ add_library(
 )
 
 target_compile_definitions(openglbenchmark PRIVATE BX_CONFIG_DEBUG=1)
-target_compile_definitions(openglbenchmark PRIVATE STB_IMAGE_IMPLEMENTATION)
 
 add_subdirectory(glad)
 

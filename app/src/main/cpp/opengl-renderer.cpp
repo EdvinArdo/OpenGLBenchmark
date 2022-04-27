@@ -10,6 +10,10 @@
 #include "model.h"
 #include "mesh.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+
+#include "stb_image.h"
+
 #define TAG "openglbenchmarktag"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,    TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN,     TAG, __VA_ARGS__)
@@ -23,7 +27,7 @@ int height;
 bool initialized = false;
 
 unsigned int VBO, VAO, EBO;
-
+unsigned int texture;
 Shader *shader;
 
 extern "C"
@@ -43,15 +47,16 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         float vertices[] = {
-                0.5f, 0.5f, 0.0f,  // top right
-                0.5f, -0.5f, 0.0f,  // bottom right
-                -0.5f, -0.5f, 0.0f,  // bottom left
-                -0.5f, 0.5f, 0.0f   // top left
+                0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+                0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
         };
         unsigned int indices[] = {  // note that we start from 0!
                 0, 1, 3,  // first Triangle
                 1, 2, 3   // second Triangle
         };
+
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
@@ -64,8 +69,32 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+
+        // texture
+        glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        // set the texture wrapping/filtering options (on the currently bound texture object)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // load and generate the texture
+        int width, height, nrChannels;
+        unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+        if (data) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        } else {
+            LOGE("Failed to load texture");
+        }
+        stbi_image_free(data);
 
         // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -90,6 +119,7 @@ Java_com_example_openglbenchmark_TestGLRenderer_drawFrame(JNIEnv *env, jobject t
     // draw
     shader->use();
     glBindVertexArray(VAO);
+    glBindTexture(GL_TEXTURE_2D, texture);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0); // no need to unbind it every time
@@ -100,17 +130,14 @@ Java_com_example_openglbenchmark_TestGLRenderer_drawFrame(JNIEnv *env, jobject t
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_openglbenchmark_TestGLRenderer_setDimensions(JNIEnv *env, jobject thiz,
-                                                              jint screenWidth,
-                                                              jint screenHeight) {
+Java_com_example_openglbenchmark_TestGLRenderer_setDimensions(JNIEnv *env, jobject thiz, jint screenWidth, jint screenHeight) {
     width = screenWidth;
     height = screenHeight;
     glViewport(0, 0, width, height);
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_openglbenchmark_MainActivity_passAssetManager(JNIEnv *env, jobject thiz,
-                                                               jobject assetManager) {
+Java_com_example_openglbenchmark_MainActivity_passAssetManager(JNIEnv *env, jobject thiz, jobject assetManager) {
     mgr = AAssetManager_fromJava(env, assetManager);
 
     jclass activityClass = env->GetObjectClass(thiz);
@@ -119,8 +146,7 @@ Java_com_example_openglbenchmark_MainActivity_passAssetManager(JNIEnv *env, jobj
     jmethodID getCacheDir = env->GetMethodID(activityClass, "getCacheDir", "()Ljava/io/File;");
     jobject file = env->CallObjectMethod(thiz, getCacheDir);
     jclass fileClass = env->FindClass("java/io/File");
-    jmethodID getAbsolutePath = env->GetMethodID(fileClass, "getAbsolutePath",
-                                                 "()Ljava/lang/String;");
+    jmethodID getAbsolutePath = env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
     jstring jpath = (jstring) env->CallObjectMethod(file, getAbsolutePath);
     const char *app_dir = env->GetStringUTFChars(jpath, NULL);
 
