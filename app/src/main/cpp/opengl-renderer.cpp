@@ -4,6 +4,7 @@
 #include <string>
 #include <EGL/egl.h>
 #include <unistd.h>
+#include <time.h>
 #include "glad/include/glad/glad.h"
 #include "shader.h"
 #include "camera.h"
@@ -26,7 +27,7 @@ int width;
 int height;
 bool initialized = false;
 
-unsigned int VBO, VAO, EBO;
+unsigned int VBO, VAO;
 unsigned int texture;
 Shader *shader;
 
@@ -47,34 +48,63 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         float vertices[] = {
-                0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-                0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        };
-        unsigned int indices[] = {  // note that we start from 0!
-                0, 1, 3,  // first Triangle
-                1, 2, 3   // second Triangle
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+                -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
+                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
         };
 
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
+
+        glEnable(GL_DEPTH_TEST);
 
         // texture
         glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
@@ -99,9 +129,6 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
         // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
         // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
         glBindVertexArray(0);
@@ -114,14 +141,35 @@ Java_com_example_openglbenchmark_TestGLRenderer_drawFrame(JNIEnv *env, jobject t
 // render
     // ------
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    timespec res;
+    clock_gettime(CLOCK_MONOTONIC, &res);
+
+    glm::mat4 model = glm::mat4(1.0f);
+    LOGD("%f", res.tv_sec * 1.e9 + res.tv_nsec);
+    float time = res.tv_sec + res.tv_nsec / 1.e9;
+    model = glm::rotate(model, (float) time * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));;
+
+    glm::mat4 view = glm::mat4(1.0f);
+    // note that we're translating the scene in the reverse direction of where we want to move
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(45.0f), (float) width / (float) height, 0.1f, 100.0f);
+
+
+    shader->setMat4("model", model);
+    shader->setMat4("view", view);
+    shader->setMat4("projection", projection);
 
     // draw
     shader->use();
     glBindVertexArray(VAO);
     glBindTexture(GL_TEXTURE_2D, texture);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+//    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0); // no need to unbind it every time
 
 //     egl: swap buffers

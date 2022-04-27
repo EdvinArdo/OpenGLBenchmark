@@ -1,13 +1,14 @@
 attribute vec3 aPos;
-attribute vec3 aColor;
 attribute vec2 aTexCoord;
 
-varying vec3 ourColor;
 varying vec2 TexCoord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
-    ourColor = aColor;
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
     TexCoord = aTexCoord;
 }
