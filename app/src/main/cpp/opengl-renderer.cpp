@@ -10,6 +10,12 @@
 #include "model.h"
 #include "mesh.h"
 
+#define TAG "openglbenchmarktag"
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,    TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN,     TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,     TAG, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,    TAG, __VA_ARGS__)
+
 AAssetManager *mgr;
 
 int width;
@@ -28,8 +34,7 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
 
         // Initialize glad
         if (!gladLoadGLES2Loader((GLADloadproc) eglGetProcAddress)) {
-            __android_log_print(ANDROID_LOG_ERROR, "openglbenchmarktag",
-                                "Failed to initialize GLAD");
+            LOGE("Failed to initialize GLAD");
         }
 
         // init shader
