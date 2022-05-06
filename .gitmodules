@@ -1,0 +1,6 @@
+[submodule "app/src/main/cpp/assimp"]
+	path = app/src/main/cpp/assimp
+	url = git@github.com:assimp/assimp.git
+[submodule "app/src/main/cpp/glm"]
+	path = app/src/main/cpp/glm
+	url = git@github.com:g-truc/glm.git
