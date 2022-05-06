@@ -83,6 +83,13 @@ public:
         }
         // shader Program
         ID = glCreateProgram();
+        glBindAttribLocation(ID, 0, "aPos");
+        glBindAttribLocation(ID, 1, "aNormal");
+        glBindAttribLocation(ID, 2, "aTexCoord");
+        glBindAttribLocation(ID, 3, "aTangent");
+        glBindAttribLocation(ID, 4, "aBitangent");
+        glBindAttribLocation(ID, 5, "aBoneIDs");
+        glBindAttribLocation(ID, 6, "aWeights");
         glAttachShader(ID, vertex);
         glAttachShader(ID, fragment);
         if(geometryPath != nullptr)

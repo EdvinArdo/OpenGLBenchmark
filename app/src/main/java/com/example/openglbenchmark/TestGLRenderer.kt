@@ -1,6 +1,5 @@
 package com.example.openglbenchmark
 
-import android.opengl.GLES32
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 

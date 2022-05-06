@@ -1,5 +1,10 @@
 attribute vec3 aPos;
+attribute vec3 aNormal;
 attribute vec2 aTexCoord;
+attribute vec3 aTangent;
+attribute vec3 aBitangent;
+attribute vec4 aBoneIDs;
+attribute vec4 aWeights;
 
 varying vec2 TexCoord;
 
