@@ -34,6 +34,7 @@ bool initialized = false;
 
 Shader *shader;
 Model *ourModel;
+Camera *camera;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -52,6 +53,7 @@ Java_com_example_openglbenchmark_TestGLRenderer_init(JNIEnv *env, jobject thiz) 
         glEnable(GL_DEPTH_TEST);
 
         ourModel = new Model("sponza/sponza.obj");
+        camera = new Camera(glm::vec3(-1400.0f, 100.0f, -250.0f));
 
         startTime = getTime();
     }
@@ -70,17 +72,16 @@ Java_com_example_openglbenchmark_TestGLRenderer_drawFrame(JNIEnv *env, jobject t
 
     glm::mat4 model = glm::mat4(1.0f);
 
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, -100.0f, 0.0f));
-    view = glm::rotate(view, (float) timeDiff * glm::radians(30.0f), glm::vec3(0, 1.0f, 0.0f));
-
-    glm::mat4 projection;
-    projection = glm::perspective(glm::radians(90.0f), (float) width / (float) height, 1.0f, 10000.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float) width / (float) height, 1.0f, 10000.0f);
 
     shader->use();
     shader->setMat4("model", model);
-    shader->setMat4("view", view);
+    shader->setMat4("view", camera->GetViewMatrix());
+    shader->setVec3("viewPos", camera->Position);
     shader->setMat4("projection", projection);
+    float angle = glm::radians(360.0f / 10.0f * timeDiff);
+    shader->setVec3("lightPos", 1400.0f * cos(angle), 100, 0);
+    shader->setVec3("lightColor", 1.0f, 1.0, 1.0);
 
     ourModel->Draw(*shader);
 }

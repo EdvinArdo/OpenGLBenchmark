@@ -43,14 +43,16 @@ public:
     vector<Vertex>       vertices;
     vector<unsigned int> indices;
     vector<Texture>      textures;
+    float shininess;
     unsigned int VAO;
 
     // constructor
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
+    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, float shininess)
     {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
+        this->shininess = shininess;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
@@ -84,6 +86,9 @@ public:
             // and finally bind the texture
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }
+
+        // set shininess uniform
+        shader.setFloat("shininess", shininess);
 
         // draw mesh
         glBindVertexArray(VAO);

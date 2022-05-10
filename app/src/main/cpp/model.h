@@ -164,8 +164,12 @@ private:
         std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
+        // shininess
+        float shininess;
+        aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices, textures);
+        return Mesh(vertices, indices, textures, shininess);
     }
 
     // checks all material textures of a given type and loads the textures if they're not loaded yet.

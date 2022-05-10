@@ -7,6 +7,8 @@ attribute vec4 aBoneIDs;
 attribute vec4 aWeights;
 
 varying vec2 TexCoord;
+varying vec3 FragPos;
+varying vec3 Normal;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -14,6 +16,9 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
     TexCoord = aTexCoord;
+    FragPos = aPos;
+    Normal = aNormal;
+
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
